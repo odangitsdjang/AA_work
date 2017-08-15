@@ -78,7 +78,8 @@ def bsearch(array, target)
   if array[midpoint] > target
     bsearch(array[0...midpoint], target)
   elsif array[midpoint] < target
-    midpoint + bsearch(array[midpoint+1..-1], target) + 1
+    check = bsearch(array[midpoint+1..-1], target) 
+    check.nil? ? nil : midpoint + check + 1 
   else
     return midpoint
   end
@@ -135,6 +136,6 @@ end
 
 if __FILE__ == $PROGRAM_NAME
   # make_better_change(24, [10,7,1])
-
-  make_better_change(18,[10,9,1])
+   p  bsearch([1,2,3,4],6) == nil
+   p bsearch([1,2,3,4,5,6,7,8,9,10], 4)
 end
