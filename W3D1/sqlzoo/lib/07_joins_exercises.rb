@@ -40,13 +40,17 @@ end
 def ford_films
   # List the films in which 'Harrison Ford' has appeared.
   execute(<<-SQL)
-    SELECT movies.title
-    FROM movies
-    JOIN castings
-    ON castings.movie_id = movies.id
-    JOIN actors
-    ON actors.id = castings.actor_id
-    WHERE actors.name = 'Harrison Ford'
+    SELECT
+      movies.title
+    FROM
+      movies
+    JOIN
+      castings ON movies.id = castings.movie_id
+    JOIN
+      actors ON castings.actor_id = actors.id
+    WHERE
+      actors.name = 'Harrison Ford'
+
 
   SQL
 end
@@ -56,27 +60,29 @@ def ford_supporting_films
   # role. [Note: the ord field of casting gives the position of the actor. If
   # ord=1 then this actor is in the starring role]
   execute(<<-SQL)
-    SELECT movies.title
-    FROM movies
-    JOIN castings
-    ON castings.movie_id = movies.id
-    JOIN actors
-    ON actors.id = castings.actor_id
-    WHERE ord != 1 AND actors.name = 'Harrison Ford'
+    SELECT
+      movies.title
+    FROM
+      movies
+    JOIN
+      castings ON movies.id = castings.movie_id
+    JOIN
+      actors ON castings.actor_id = actors.id
+    WHEre   actors.name = 'Harrison Ford' AND castings.ord != 1
   SQL
 end
 
 def films_and_stars_from_sixty_two
   # List the title and leading star of every 1962 film.
   execute(<<-SQL)
-    SELECT title, actors.name
+    SELECT movies.title, actors.name
     FROM movies
-    JOIN castings
-    ON castings.movie_id = movies.id
-    JOIN actors
-    ON actors.id = castings.actor_id
-    WHERE ord = 1 AND movies.yr = 1962
-
+    JOIN
+      castings ON movies.id = castings.movie_id
+    JOIN
+      actors ON castings.actor_id = actors.id
+    WHERE
+      movies.yr = '1962' AND castings.ord = 1
   SQL
 end
 
@@ -86,18 +92,14 @@ def travoltas_busiest_years
   # Which were the busiest years for 'John Travolta'? Show the year and the
   # number of movies he made for any year in which he made at least 2 movies.
   execute(<<-SQL)
-    SELECT yr, COUNT(title)
+    SELECT movies.yr, COUNT(*) as num
     FROM movies
-
-    JOIN castings
-    ON castings.movie_id = movies.id
-    JOIN actors
-    ON actors.id = castings.actor_id
-
-    WHERE name = 'John Travolta' 
-    GROUP BY yr
-    HAVING COUNT(title) >= 2
-
+    JOIN castings ON movies.id = castings.movie_id
+    JOIN actors ON castings.actor_id = actors.id
+    WHERE actors.name = 'John Travolta'
+    group by movies.yr
+    having count(*) >= 2
+    ORDER BY num DESC
 
   SQL
 end
@@ -106,18 +108,20 @@ def andrews_films_and_leads
   # List the film title and the leading actor for all of the films 'Julie
   # Andrews' played in.
   execute(<<-SQL)
-    SELECT title, name
+
+  SELECT movies.title, actors.name
+  FROM movies
+  JOIN castings ON movies.id = castings.movie_id
+  JOIN actors ON castings.actor_id = actors.id
+  WHERE movies.title in (
+    SELECT movies.title
     FROM movies
-    JOIN castings ON castings.movie_id = movies.id
-    JOIN actors ON actors.id = castings.actor_id
+    JOIN castings ON movies.id = castings.movie_id
+    JOIN actors ON castings.actor_id = actors.id
+    WHERE actors.name = 'Julie Andrews'
+  ) AND castings.ord = 1
 
 
-    WHERE movie_id IN (SELECT castings.movie_id
-    FROM actors
-    JOIN castings ON castings.actor_id = actors.id
-    WHERE actors.name = 'Julie Andrews')
-
-    AND ord = 1
 
   SQL
 end
@@ -126,17 +130,15 @@ def prolific_actors
   # Obtain a list in alphabetical order of actors who've had at least 15
   # starring roles.
   execute(<<-SQL)
-    SELECT name
-    FROM actors
-    JOIN castings
-    ON castings.actor_id = actors.id
-    JOIN movies
-    ON movies.id = castings.movie_id
+    SELECT actors.name
+    FROM movies
+    JOIN castings ON movies.id = castings.movie_id
+    JOIN actors ON castings.actor_id = actors.id
+    where castings.ord = 1
+    GROUP By actors.name
+    Having COUNT(*) >= 15
+    order by name
 
-    WHERE ord = 1
-    GROUP BY name
-    HAVING COUNT(title) >= 15
-    ORDER BY name
   SQL
 end
 
@@ -144,16 +146,13 @@ def films_by_cast_size
   # List the films released in the year 1978 ordered by the number of actors
   # in the cast (descending), then by title (ascending).
   execute(<<-SQL)
-    SELECT title, COUNT(name)
+    select movies.title, COUNT(*)
     FROM movies
-    JOIN castings
-    ON castings.movie_id = movies.id
-    JOIN actors
-    ON actors.id = castings.actor_id
-
-    WHERE yr = 1978
-    GROUP BY title
-    ORDER BY COUNT(name) DESC, title ASC
+    JOIN castings ON movies.id = castings.movie_id
+    JOIN actors ON castings.actor_id = actors.id
+    where movies.yr = 1978
+    group by movies.title
+    order by COUNT(*) DESC, movies.title ASC
   SQL
 end
 
@@ -163,22 +162,17 @@ def colleagues_of_garfunkel
   # then get all actors not named garfunkel with reference to their movies
   # then check actors acting in movies where garfunkels was present
   execute(<<-SQL)
-    SELECT name
-    FROM (
-      SELECT movies.*
-      FROM movies
-      JOIN castings
-      ON castings.movie_id = movies.id
-      JOIN actors
-      ON actors.id = castings.actor_id
+    select actors.name
+    from movies
+    JOIN castings ON movies.id = castings.movie_id
+    JOIN actors ON castings.actor_id = actors.id
+    Where movies.title in (
+      select movies.title
+      from movies
+      JOIN castings ON movies.id = castings.movie_id
+      JOIN actors ON castings.actor_id = actors.id
       WHERE actors.name = 'Art Garfunkel'
-    ) AS X
-    JOIN  (
-      SELECT *
-      FROM actors
-      JOIN castings ON castings.actor_id = actors.id
-      WHERE actors.name != 'Art Garfunkel'
-    ) AS Y ON X.id = Y.movie_id
+    ) AND actors.name != 'Art Garfunkel'
 
   SQL
 end

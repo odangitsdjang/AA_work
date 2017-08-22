@@ -18,10 +18,10 @@ require_relative './sqlzoo.rb'
 def null_dept
   # List the teachers who have NULL for their department.
   execute(<<-SQL)
-    SELECT teachers.name
-    FROM teachers
-    LEFT JOIN depts ON depts.id = teachers.dept_id
-    WHERE depts IS NULL
+    select teachers.name
+    from teachers
+    LEFT OUTER JOIN depts ON depts.id = teachers.dept_id
+    where dept_id IS NULL
   SQL
 end
 
@@ -29,9 +29,9 @@ def all_teachers_join
   # Use a type of JOIN that will list all teachers and their department,
   # even if the department in NULL/nil.
   execute(<<-SQL)
-    SELECT teachers.name, depts.name
-    FROM teachers
-    LEFT JOIN depts ON depts.id = teachers.dept_id
+    select teachers.name, depts.name
+    from teachers
+    LEFT OUTER JOIN depts ON depts.id = teachers.dept_id
 
   SQL
 end
@@ -41,9 +41,10 @@ def all_depts_join
   # NB: you can avoid RIGHT OUTER JOIN (and just use LEFT) by swapping
   # the FROM and JOIN tables.
   execute(<<-SQL)
-    SELECT teachers.name, depts.name
-    FROM depts
-    LEFT JOIN teachers ON depts.id = teachers.dept_id
+    select teachers.name, depts.name
+    from depts
+    LEFT OUTER JOIN teachers ON depts.id = teachers.dept_id
+
   SQL
 end
 
@@ -55,7 +56,6 @@ def teachers_and_mobiles
     SELECT name, COALESCE(mobile, '07986 444 2266')
     FROM teachers
 
-
   SQL
 end
 
@@ -66,7 +66,8 @@ def teachers_and_depts
   execute(<<-SQL)
     SELECT teachers.name, COALESCE(depts.name, 'None')
     FROM teachers
-    LEFT JOIN depts ON depts.id = teachers.dept_id
+    LEFT OUTER JOIN depts ON depts.id = teachers.dept_id
+
 
   SQL
 end
@@ -76,8 +77,9 @@ def num_teachers_and_mobiles
   # mobile phones.
   # NB: COUNT only counts non-NULL values.
   execute(<<-SQL)
-    SELECT COUNT(teachers.name), COUNT(teachers.mobile)
-    FROM teachers
+    select count(teachers.name), count(mobile)
+    from teachers
+
 
   SQL
 end
@@ -88,8 +90,8 @@ def dept_staff_counts
   # Engineering department is listed.
   execute(<<-SQL)
     SELECT depts.name, COUNT(teachers.name)
-    FROM teachers
-    RIGHT JOIN depts ON depts.id = teachers.dept_id
+    FROM depts
+    LEFT OUTER JOIN teachers ON depts.id = teachers.dept_id
     GROUP BY depts.name
   SQL
 end
@@ -98,10 +100,8 @@ def teachers_and_divisions
   # Use CASE to show the name of each teacher followed by 'Sci' if
   # the the teacher is in dept 1 or 2 and 'Art' otherwise.
   execute(<<-SQL)
-    SELECT teachers.name,
-          CASE WHEN teachers.dept_id = 1 OR teachers.dept_id = 2 THEN 'Sci'
-               ELSE 'Art' END
-    FROM teachers
+    SELECT name , CASE dept_id WHEN 1 THEN 'Sci' WHEN 2 THEN 'Sci' ELSE 'Art' END
+    from teachers
   SQL
 end
 
@@ -110,10 +110,7 @@ def teachers_and_divisions_two
   # the the teacher is in dept 1 or 2, 'Art' if the dept is 3, and
   # 'None' otherwise.
   execute(<<-SQL)
-  SELECT teachers.name,
-        CASE WHEN teachers.dept_id = 1 OR teachers.dept_id = 2 THEN 'Sci'
-             WHEN teachers.dept_id = 3 THEN  'Art'
-             ELSE 'None' END
-  FROM teachers
+  SELECT name , CASE dept_id WHEN 1 THEN 'Sci' WHEN 2 THEN 'Sci' WHEN 3 THEN 'Art' ELSE 'None' END
+  from teachers
   SQL
 end
