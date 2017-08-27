@@ -1,0 +1,10 @@
+<form action="<%= sessions_url %>" method="post">
+  <%= csrf_counter %>
+  <label for="email">Email:</label>
+  <input type="text" name="user[email]" value="">
+
+  <label for="password">Password:</label>
+  <input type="password" name="user[password]" value="">
+
+  <input type="submit" name="" value="LOG IN!">
+</form>
